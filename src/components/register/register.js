@@ -2,7 +2,7 @@ import React from "react";
 import styled from "styled-components";
 import { BaseContainer } from "../../helpers/layout";
 import { getDomain } from "../../helpers/getDomain";
-import User from "../shared/models/User";
+//import User from "../shared/models/User";
 import { withRouter } from "react-router-dom";
 import { Button } from "../../views/design/Button";
 //import {registration} from './registration'
@@ -66,7 +66,7 @@ const ButtonContainer = styled.div`
  * https://reactjs.org/docs/react-component.html
  * @Class
  */
-class Login extends React.Component {
+class Register extends React.Component {
     /**
      * If you don’t initialize the state and you don’t bind methods, you don’t need to implement a constructor for your React component.
      * The constructor for a React component is called before it is mounted (rendered).
@@ -77,93 +77,64 @@ class Login extends React.Component {
         super();
         this.state = {
             password: null,
-            username: null
+            username: null,
+            birthday: null,
+
         };
     }
     /**
      * HTTP POST request is sent to the backend.
      * If the request is successful, a new user is returned to the front-end and its token is stored in the localStorage.
      */
-    /*login() {
-      fetch(`${getDomain()}/users`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          username: this.state.username,
-          password: this.state.password
-        })
-      })
-        .then(response => response.json())
-        .then(returnedUser => {
-          const user = new User(returnedUser);
-          // store the token into the local storage
-          localStorage.setItem("token", user.token);
-          // user login successfully worked --> navigate to the route /game in the GameRouter
-          this.props.history.push(`/game`);
-        })
-        .catch(err => {
-          if (err.message.match(/Failed to fetch/)) {
-            alert("The server cannot be reached. Did you start it?");
-          } else {
-            alert(`Something went wrong during the login: ${err.message}`);
-          }
-        });
-    }*/
-    attemptlogin() {
-        fetch(`${getDomain()}/auth`, {
+    register() {
+        fetch(`${getDomain()}/users`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
                 username: this.state.username,
-                password: this.state.password
+                password: this.state.password,
+                birthday: this.state.birthday
             })
         })
             .then(response => response.json())
             .then(returnedUser => {
                 if (returnedUser.status === 409) {
-                    window.alert("username or password wrong");
+                    window.alert("Username already taken!")
                 } else {
-                    const user = new User(returnedUser);
                     // store the token into the local storage
-                    localStorage.setItem("theUserId", user.id);
-                    localStorage.setItem("token", user.token);
                     // user login successfully worked --> navigate to the route /game in the GameRouter
-                    this.props.history.push(`/game`);
+                    this.props.history.push("/login");
                 }
             })
-            /*.then(async response => {
-              if (!response.ok) {
-                //const errorMsg = await response.json();
-                alert("Something went wrong!");
-                return null;
-              }
-              else {
-                return response.json();
-              }
-            })
-            .then(returnedUser => {
-              const user = new User(returnedUser);
-              // store the token into the local storage
-              localStorage.setItem("token", user.token);
-              // user login successfully worked --> navigate to the route /game in the GameRouter
-              this.props.history.push(`/game`);
-            })*/
             .catch(err => {
                 if (err.message.match(/Failed to fetch/)) {
                     alert("The server cannot be reached. Did you start it?");
                 } else {
-                    alert(`Something went wrong during the login: ${err.message}`);
+                    alert(`Something went wrong during the registration: ${err.message}`);
                 }
             });
     }
 
+    /**
+     *  Every time the user enters something in the input field, the state gets updated.
+     * @param key (the key of the state for identifying the field that needs to be updated)
+     * @param value (the value that gets assigned to the identified state key)
+     */
     handleInputChange(key, value) {
+        // Example: if the key is username, this statement is the equivalent to the following one:
+        // this.setState({'username': value});
         this.setState({ [key]: value });
     }
+
+    /**
+     * componentDidMount() is invoked immediately after a component is mounted (inserted into the tree).
+     * Initialization that requires DOM nodes should go here.
+     * If you need to load data from a remote endpoint, this is a good place to instantiate the network request.
+     * You may call setState() immediately in componentDidMount().
+     * It will trigger an extra rendering, but it will happen before the browser updates the screen.
+     */
     componentDidMount() {}
 
     render() {
@@ -185,25 +156,22 @@ class Login extends React.Component {
                                 this.handleInputChange("password", e.target.value);
                             }}
                         />
+                        <Label>Birthday DD/MM/YYYY</Label>
+                        <InputField
+                            placeholder="Enter here.."
+                            onChange={e => {
+                                this.handleInputChange("birthday", e.target.value);
+                            }}
+                        />
                         <ButtonContainer>
                             <Button
-                                disabled={!this.state.username || !this.state.password}
+                                disabled={!this.state.username || !this.state.password || !this.state.birthday}
                                 width="50%"
                                 onClick={() => {
-                                    this.attemptlogin();
+                                    this.register();
                                 }}
                             >
-                                Login
-                            </Button>
-                        </ButtonContainer>
-                        <ButtonContainer>
-                            <Button
-                                width="50%"
-                                onClick={() => {
-                                    this.props.history.push('/register')
-                                }}
-                            >
-                                Registration
+                                Register
                             </Button>
                         </ButtonContainer>
                     </Form>
@@ -212,4 +180,9 @@ class Login extends React.Component {
         );
     }
 }
-export default withRouter(Login);
+
+/**
+ * You can get access to the history object's properties via the withRouter.
+ * withRouter will pass updated match, location, and history props to the wrapped component whenever it renders.
+ */
+export default withRouter(Register);

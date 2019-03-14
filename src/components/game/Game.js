@@ -5,7 +5,9 @@ import { getDomain } from "../../helpers/getDomain";
 import Player from "../../views/Player";
 import { Spinner } from "../../views/design/Spinner";
 import { Button } from "../../views/design/Button";
-import { withRouter } from "react-router-dom";
+import { withRouter,Redirect } from "react-router-dom";
+import Profile from "../../components/profile/Profile.js";
+import Link from "react-router-dom/es/Link";
 
 const Container = styled(BaseContainer)`
   color: white;
@@ -23,18 +25,41 @@ const PlayerContainer = styled.li`
   align-items: center;
   justify-content: center;
 `;
+const ButtonContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+`;
 
 class Game extends React.Component {
   constructor() {
     super();
     this.state = {
-      users: null
+      users: null,
+      status: null
     };
   }
 
   logout() {
-    localStorage.removeItem("token");
-    this.props.history.push("/login");
+    fetch(`${getDomain()}/logout/${localStorage.getItem("theUserId")}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      }
+    })
+        .then(response => response.json())
+        .then(async users => {
+          localStorage.removeItem("token");
+          localStorage.removeItem("loggedInAsId");
+          this.props.history.push("/login");
+          await new Promise(resolve => setTimeout(resolve, 800));
+
+          this.setState({ users });
+        })
+        .catch(err => {
+          console.log(err);
+          alert("Something went wrong fetching the users: " + err);
+        });
   }
 
   componentDidMount() {
@@ -44,52 +69,59 @@ class Game extends React.Component {
         "Content-Type": "application/json"
       }
     })
-      .then(response => response.json())
-      .then(async users => {
-        // delays continuous execution of an async operation for 0.8 seconds.
-        // This is just a fake async call, so that the spinner can be displayed
-        // feel free to remove it :)
-        await new Promise(resolve => setTimeout(resolve, 800));
+        .then(response => response.json())
+        .then(async users => {
+          // delays continuous execution of an async operation for 0.8 seconds.
+          // This is just a fake async call, so that the spinner can be displayed
+          // feel free to remove it :)
+          await new Promise(resolve => setTimeout(resolve, 800));
 
-        this.setState({ users });
-      })
-      .catch(err => {
-        console.log(err);
-        alert("Something went wrong fetching the users: " + err);
-      });
+          this.setState({ users });
+        })
+        .catch(err => {
+          console.log(err);
+          alert("Something went wrong fetching the users: " + err);
+        });
   }
 
   render() {
     return (
-      <Container>
-        <h2>Happy Coding! </h2>
-        <p>Get all users from secure end point:</p>
-        {!this.state.users ? (
-          <Spinner />
-        ) : (
-          <div>
-            <Users>
-              {this.state.users.map(user => {
-                return (
-                  <PlayerContainer key={user.id}>
-                    <Player user={user} />
-                  </PlayerContainer>
-                );
-              })}
-            </Users>
-            <Button
-              width="100%"
-              onClick={() => {
-                this.logout();
-              }}
-            >
-              Logout
-            </Button>
-          </div>
-        )}
-      </Container>
+        <Container>
+          <h2>Happy Coding! </h2>
+          <p>Get all users from secure end point:</p>
+          {!this.state.users ? (
+              <Spinner />
+          ) : (
+              <div>
+                <Users>
+                  {this.state.users.map(user => {
+                    return (
+                        <PlayerContainer key={user.id}>
+                          <Player user={user} />
+                          <Button
+                              onClick={() => {
+                                return this.props.history.push(`/profile/${user.id}`);
+                              }}>User Profile {user.id}
+                          </Button>
+                        </PlayerContainer>
+                    );
+                  })}
+                </Users>
+                <Button
+                    width="100%"
+                    onClick={() => {
+                      this.logout();
+                    }}
+                >
+                  Logout
+                </Button>
+              </div>
+          )}
+        </Container>
     );
   }
 }
 
 export default withRouter(Game);
+
+
